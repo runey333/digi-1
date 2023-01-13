@@ -7,7 +7,6 @@ import pyzed
 import event
 
 ZED_LAKE_URL = "http://localhost:9867"
-POLL_INTERVAL_SECONDS = 10.0
 SPAWNED_THREADS = []
 zed_client = pyzed.Client(base_url=ZED_LAKE_URL)
 
@@ -69,8 +68,9 @@ def patch_existing_pools(new_spec):
         
 
 def poll_func():
-    Timer(POLL_INTERVAL_SECONDS, poll_func).start()
-    
+    curr_spec, _, _ = digi.util.get_spec("digi.dev", "v1", "lakes", "lake", "default")
+    Timer(curr_spec["control"]["poll_interval_seconds"]["intent"], poll_func).start()
+        
     new_spec = {"pools" : {}}
     
     pool_query_pyzed = zed_client.query("from :pools")

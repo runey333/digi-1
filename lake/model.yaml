@@ -1,6 +1,8 @@
 group: digi.dev
 version: v1
 kind: lake
+control:
+  poll_interval_seconds: number
 stats:
   openapi:
     properties:

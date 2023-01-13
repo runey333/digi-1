@@ -23,6 +23,16 @@ spec:
             type: object
           spec:
             properties:
+              control:
+                properties:
+                  poll_interval_seconds:
+                    properties:
+                      intent:
+                        type: number
+                      status:
+                        type: number
+                    type: object
+                type: object
               pools:
                 additionalProperties:
                   properties:
