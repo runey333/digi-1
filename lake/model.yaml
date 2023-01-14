@@ -13,6 +13,8 @@ pools:
   openapi:
     additionalProperties:
       properties:
+        name:
+          type: string
         head:
           type: string
         last_updated:

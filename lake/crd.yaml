@@ -40,6 +40,8 @@ spec:
                       type: string
                     last_updated:
                       type: string
+                    name:
+                      type: string
                     size:
                       type: number
                   type: object

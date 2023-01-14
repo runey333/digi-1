@@ -90,10 +90,10 @@ def poll_func():
         pool_count = get_branch_count_sum(name, curr_branches)
         
         #add count, HEADS, and timestamp to new spec
-        try: #use try-except in case we don't have values for head yet (generated from event parsing)
-            new_spec["pools"][pool_id] = {"head": event.HEADS[pool_id], "last_updated" : ts, "size": pool_count} #race on HEADS with event thread?
-        except:
-            new_spec["pools"][pool_id] = {"head": event.NULL_COMMIT_ID, "last_updated" : ts, "size": pool_count}
+        if pool_id in event.HEADS:
+            new_spec["pools"][pool_id] = {"head": event.HEADS[pool_id], "last_updated" : ts, "size": pool_count, "name" : name} #race on HEADS with event thread?
+        else:
+            new_spec["pools"][pool_id] = {"head": event.NULL_COMMIT_ID, "last_updated" : ts, "size": pool_count, "name" : name}
     
     #patch spec
     patch_existing_pools(new_spec)
