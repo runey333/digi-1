@@ -74,15 +74,12 @@ def poll_func():
     new_spec = {"pools" : {}}
     
     pool_query_pyzed = zed_client.query("from :pools")
-    pool_dicts =[]
+    pool_dicts = []
     for elem in pool_query_pyzed:
         pool_dicts.append(elem)
     
     for pool_dict in pool_dicts:
         ts, name, pool_id = str(pool_dict["ts"]), pool_dict["name"], str(pool_dict["id"].hex())
-        
-        #update POOL_NAME_MAP
-        event.POOL_NAME_MAP[pool_id] = name
     
         #run count() on each pool branch to get numbers of records
         #get branch names
@@ -90,10 +87,12 @@ def poll_func():
         pool_count = get_branch_count_sum(name, curr_branches)
         
         #add count, HEADS, and timestamp to new spec
+        event.HEADS_LOCK.acquire()
         if pool_id in event.HEADS:
-            new_spec["pools"][pool_id] = {"head": event.HEADS[pool_id], "last_updated" : ts, "size": pool_count, "name" : name} #race on HEADS with event thread?
-        else:
-            new_spec["pools"][pool_id] = {"head": event.NULL_COMMIT_ID, "last_updated" : ts, "size": pool_count, "name" : name}
+            new_spec["pools"][pool_id] = {"head": event.HEADS[pool_id], "last_updated" : ts, "size": pool_count, "name" : name}
+        else: #do not update head if none is found
+            new_spec["pools"][pool_id] = {"last_updated" : ts, "size": pool_count, "name" : name}
+        event.HEADS_LOCK.release()
     
     #patch spec
     patch_existing_pools(new_spec)
