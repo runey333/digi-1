@@ -69,7 +69,7 @@ def patch_existing_pools(new_spec):
 
 def poll_func():
     curr_spec, _, _ = digi.util.get_spec("digi.dev", "v1", "lakes", "lake", "default")
-    Timer(curr_spec["control"]["poll_interval_seconds"]["intent"], poll_func).start()
+    Timer(curr_spec["control"]["poll_interval"]["intent"], poll_func).start()
         
     new_spec = {"pools" : {}}
     

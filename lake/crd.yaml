@@ -25,7 +25,7 @@ spec:
             properties:
               control:
                 properties:
-                  poll_interval_seconds:
+                  poll_interval:
                     properties:
                       intent:
                         type: number

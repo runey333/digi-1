@@ -4,7 +4,7 @@ metadata:
   name: {{ .Values.name }}
 spec:
   control:
-    poll_interval_seconds:
+    poll_interval:
       intent: 2.0
   stats:
     num_pools: 0
