@@ -87,12 +87,11 @@ def poll_func():
         pool_count = get_branch_count_sum(name, curr_branches)
         
         #add count, HEADS, and timestamp to new spec
-        event.HEADS_LOCK.acquire()
-        if pool_id in event.HEADS:
-            new_spec["pools"][pool_id] = {"head": event.HEADS[pool_id], "last_updated" : ts, "size": pool_count, "name" : name}
-        else: #do not update head if none is found
-            new_spec["pools"][pool_id] = {"last_updated" : ts, "size": pool_count, "name" : name}
-        event.HEADS_LOCK.release()
+        with event.HEADS_LOCK:
+            if pool_id in event.HEADS:
+                new_spec["pools"][pool_id] = {"head": event.HEADS[pool_id], "last_updated" : ts, "size": pool_count, "name" : name}
+            else: #do not update head if none is found
+                new_spec["pools"][pool_id] = {"last_updated" : ts, "size": pool_count, "name" : name}
     
     #patch spec
     patch_existing_pools(new_spec)

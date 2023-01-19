@@ -63,10 +63,9 @@ def parse_delete_pool(data_line):
         pools[pool_id] = None
         new_spec["pools"] = pools
         
-        HEADS_LOCK.acquire()
-        if pool_id in HEADS:
-            HEADS.pop(pool_id)
-        HEADS_LOCK.release()
+        with HEADS_LOCK:
+            if pool_id in HEADS:
+                HEADS.pop(pool_id)
             
     res, err = digi.util.patch_spec("digi.dev", "v1", "lakes", "lake", "default", new_spec)
     
@@ -87,10 +86,9 @@ def parse_new_pool(data_line):
     pool_id = data_line_dict["pool_id"]
     
     
-    pools[pool_id] = {} 
-    HEADS_LOCK.acquire()
-    HEADS[pool_id] = NULL_COMMIT_ID
-    HEADS_LOCK.release()
+    pools[pool_id] = {}
+    with HEADS_LOCK: 
+        HEADS[pool_id] = NULL_COMMIT_ID
     new_spec["pools"] = pools
     
     res, err = digi.util.patch_spec("digi.dev", "v1", "lakes", "lake", "default", new_spec)
@@ -99,9 +97,8 @@ def parse_commit(data_line):
     data_line_dict  = dict_from_data_line(data_line)
     pool_id = data_line_dict["pool_id"] 
     commit_id = data_line_dict["commit_id"]
-    HEADS_LOCK.acquire()    
-    HEADS[pool_id] = commit_id
-    HEADS_LOCK.release()
+    with HEADS_LOCK: 
+        HEADS[pool_id] = commit_id
     
 PARSE_FUNCTION_MAP = {
     "pool-new" : parse_new_pool,
