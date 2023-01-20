@@ -45,7 +45,7 @@ def dict_from_data_line(data_line):
         return None
 
 def parse_delete_pool(data_line):
-    spec = digi.util.get_spec("digi.dev", "v1", "lakes", "lake", "default")[0]
+    spec = digi.model.get()
     new_spec = {}
     
     stats = spec.get("stats", None)
@@ -67,11 +67,11 @@ def parse_delete_pool(data_line):
             if pool_id in HEADS:
                 HEADS.pop(pool_id)
             
-    res, err = digi.util.patch_spec("digi.dev", "v1", "lakes", "lake", "default", new_spec)
+    digi.model.patch(view_or_path=new_spec)
     
                 
 def parse_new_pool(data_line):
-    spec = digi.util.get_spec("digi.dev", "v1", "lakes", "lake", "default")[0]
+    spec = digi.model.get()
     new_spec = {}
     
     stats = spec.get("stats", {"num_pools" : 0})
@@ -85,13 +85,12 @@ def parse_new_pool(data_line):
     
     pool_id = data_line_dict["pool_id"]
     
-    
     pools[pool_id] = {}
     with HEADS_LOCK: 
         HEADS[pool_id] = NULL_COMMIT_ID
     new_spec["pools"] = pools
     
-    res, err = digi.util.patch_spec("digi.dev", "v1", "lakes", "lake", "default", new_spec)
+    digi.model.patch(view_or_path=new_spec)
     
 def parse_commit(data_line):
     data_line_dict  = dict_from_data_line(data_line)

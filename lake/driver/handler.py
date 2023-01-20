@@ -48,7 +48,7 @@ def get_branch_count_sum(pool_name, branches):
 def patch_existing_pools(new_spec):
     new_spec_pools = new_spec.get("pools", {})
     while True:
-        curr_spec, _, start_gen = digi.util.get_spec("digi.dev", "v1", "lakes", "lake", "default")
+        curr_spec, _, start_gen = digi.util.get_spec(digi.g, digi.v, digi.r, digi.n, digi.ns)
         curr_pools = curr_spec.get("pools", {})
         
         keys_to_remove = []
@@ -59,16 +59,16 @@ def patch_existing_pools(new_spec):
         for pop_key in keys_to_remove:
             new_spec_pools.pop(pop_key)
                 
-        _, rv, curr_gen = digi.util.get_spec("digi.dev", "v1", "lakes", "lake", "default")
+        _, rv, curr_gen = digi.util.get_spec(digi.g, digi.v, digi.r, digi.n, digi.ns)
         if start_gen < curr_gen:
             continue
         else:        
-            res, err = digi.util.patch_spec("digi.dev", "v1", "lakes", "lake", "default", new_spec, rv=rv)
+            res, err = digi.util.patch_spec(digi.g, digi.v, digi.r, digi.n, digi.ns, new_spec, rv=rv)
             return
         
 
 def poll_func():
-    curr_spec, _, _ = digi.util.get_spec("digi.dev", "v1", "lakes", "lake", "default")
+    curr_spec = digi.model.get()
     Timer(curr_spec["control"]["poll_interval"]["intent"], poll_func).start()
         
     new_spec = {"pools" : {}}
