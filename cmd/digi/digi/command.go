@@ -43,6 +43,7 @@ func init() {
 	RootCmd.AddCommand(digestCmd)
 	RootCmd.AddCommand(kindCmd)
 	RootCmd.AddCommand(rmkCmd)
+	RootCmd.AddCommand(exposeCmd)
 	pullCmd.Flags().BoolP("local", "l", false, "Pull from local profiles")
 	pullCmd.Flags().StringP("group", "g", "", "Specifying kind group.")
 	pushCmd.Flags().BoolP("local", "l", false, "Push to local profiles")

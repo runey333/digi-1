@@ -1,6 +1,7 @@
 package digi
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -14,9 +15,17 @@ import (
 
 	"digi.dev/digi/api"
 	"digi.dev/digi/api/config"
+	"digi.dev/digi/api/k8s"
 	"digi.dev/digi/api/repo"
 	"digi.dev/digi/cmd/digi/helper"
 	"digi.dev/digi/pkg/core"
+
+	"time"
+
+	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 var (
@@ -564,6 +573,99 @@ var editCmd = &cobra.Command{
 			"FILE":   path,
 		}, cmdStr, true, false)
 		_ = os.Remove(path)
+	},
+}
+
+var exposeCmd = &cobra.Command{
+	Use:     "expose NAME NODEPORT",
+	Short:   "Expose a digi by creating a k8s nodeport",
+	Aliases: []string{"e"},
+	Args:    cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		name := args[0]
+		k8s_nodeport := args[1]
+		namespace := "default"
+
+		//Confirm digi exists
+		currAPIClient, err := api.NewClient()
+		if err != nil {
+			log.Fatalf("Error creating API Client\n")
+		}
+
+		currAuri, err := api.Resolve(name)
+
+		if err == nil && currAuri != nil {
+			json, _ := currAPIClient.GetModelJson(currAuri)
+			if len(json) <= 0 {
+				log.Fatalf("Digi %s does not exist\n", name)
+			}
+		}
+
+		k8s_clientset, err := k8s.NewClientSet()
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
+
+		//Wait for the corresponding pod to be ready: kubectl wait --for=condition=Ready pod --selector=name=$(NAME) --timeout=15s
+		wait.Poll(time.Second, 15*time.Second, func() (bool, error) {
+			pods_in_ns := k8s_clientset.Clientset.CoreV1().Pods(namespace)
+			selected_pods, err := pods_in_ns.List(context.TODO(), metav1.ListOptions{LabelSelector: fmt.Sprintf("name=%s", name)})
+			if err != nil {
+				log.Fatalf(err.Error())
+			}
+
+			for _, pod := range selected_pods.Items {
+				if pod.Status.Phase == corev1.PodRunning {
+					return true, nil
+				}
+			}
+
+			return false, nil
+		})
+
+		//Obtain a port and targetport
+		//export PORT=$(kubectl get service l2 -o jsonpath='{.spec.ports[0].port}')
+		//export TARGETPORT=$(kubectl get service l2 -o jsonpath='{.spec.ports[0].targetPort}')
+		services_in_ns := k8s_clientset.Clientset.CoreV1().Services(namespace)
+		curr_service, err := services_in_ns.Get(context.TODO(), name, metav1.GetOptions{})
+
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
+
+		port := curr_service.Spec.Ports[0].Port
+		targetPort := curr_service.Spec.Ports[0].TargetPort
+
+		//Make a NodePort service
+		k8s_nodeport_int, err := strconv.Atoi(k8s_nodeport)
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
+
+		nodeport_service := &v1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: fmt.Sprintf("%s-nodeport", name),
+			},
+			Spec: v1.ServiceSpec{
+				Selector: map[string]string{
+					"app": name,
+				},
+				Type: v1.ServiceTypeNodePort,
+				Ports: []v1.ServicePort{
+					{
+						Name:       fmt.Sprintf("%s-nodeport-ports", name),
+						Port:       port,
+						TargetPort: targetPort,
+						NodePort:   int32(k8s_nodeport_int),
+					},
+				},
+			},
+		}
+
+		_, err = services_in_ns.Create(context.TODO(), nodeport_service, metav1.CreateOptions{})
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
 	},
 }
 
