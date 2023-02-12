@@ -583,7 +583,7 @@ var exposeCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		name := args[0]
-		k8s_nodeport := args[1]
+		k8sNodeport := args[1]
 		namespace := "default"
 
 		currAPIClient, err := api.NewClient()
@@ -600,19 +600,19 @@ var exposeCmd = &cobra.Command{
 			}
 		}
 
-		k8s_clientset, err := k8s.NewClientSet()
+		k8sClientset, err := k8s.NewClientSet()
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
 
 		wait.Poll(time.Second, 15*time.Second, func() (bool, error) {
-			pods_in_ns := k8s_clientset.Clientset.CoreV1().Pods(namespace)
-			selected_pods, err := pods_in_ns.List(context.TODO(), metav1.ListOptions{LabelSelector: fmt.Sprintf("name=%s", name)})
+			podsInNS := k8sClientset.Clientset.CoreV1().Pods(namespace)
+			selectedPods, err := podsInNS.List(context.TODO(), metav1.ListOptions{LabelSelector: fmt.Sprintf("name=%s", name)})
 			if err != nil {
 				log.Fatalf(err.Error())
 			}
 
-			for _, pod := range selected_pods.Items {
+			for _, pod := range selectedPods.Items {
 				if pod.Status.Phase == corev1.PodRunning {
 					return true, nil
 				}
@@ -621,22 +621,22 @@ var exposeCmd = &cobra.Command{
 			return false, nil
 		})
 
-		services_in_ns := k8s_clientset.Clientset.CoreV1().Services(namespace)
-		curr_service, err := services_in_ns.Get(context.TODO(), name, metav1.GetOptions{})
+		servicesInNs := k8sClientset.Clientset.CoreV1().Services(namespace)
+		currService, err := servicesInNs.Get(context.TODO(), name, metav1.GetOptions{})
 
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
 
-		port := curr_service.Spec.Ports[0].Port
-		targetPort := curr_service.Spec.Ports[0].TargetPort
+		port := currService.Spec.Ports[0].Port
+		targetPort := currService.Spec.Ports[0].TargetPort
 
-		k8s_nodeport_int, err := strconv.Atoi(k8s_nodeport)
+		k8sNodeportInt, err := strconv.Atoi(k8sNodeport)
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
 
-		nodeport_service := &v1.Service{
+		nodeportService := &v1.Service{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: fmt.Sprintf("%s-nodeport", name),
 			},
@@ -650,13 +650,13 @@ var exposeCmd = &cobra.Command{
 						Name:       fmt.Sprintf("%s-nodeport-ports", name),
 						Port:       port,
 						TargetPort: targetPort,
-						NodePort:   int32(k8s_nodeport_int),
+						NodePort:   int32(k8sNodeportInt),
 					},
 				},
 			},
 		}
 
-		_, err = services_in_ns.Create(context.TODO(), nodeport_service, metav1.CreateOptions{})
+		_, err = servicesInNs.Create(context.TODO(), nodeportService, metav1.CreateOptions{})
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
