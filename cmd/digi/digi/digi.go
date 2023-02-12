@@ -25,6 +25,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -577,13 +578,19 @@ var editCmd = &cobra.Command{
 }
 
 var exposeCmd = &cobra.Command{
-	Use:     "expose NAME NODEPORT",
+	Use:     "expose NAME",
 	Short:   "Expose a digi by creating a k8s nodeport",
 	Aliases: []string{"e"},
-	Args:    cobra.ExactArgs(2),
+	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		name := args[0]
-		k8sNodeport := args[1]
+
+		portFlag, _ := cmd.Flags().GetInt("port")
+		port := portFlag
+		targetPortFlag, _ := cmd.Flags().GetInt("targetPort")
+		targetPort := intstr.FromInt(targetPortFlag)
+		nodePortFlag, _ := cmd.Flags().GetInt("nodePort")
+
 		namespace := "default"
 
 		currAPIClient, err := api.NewClient()
@@ -591,6 +598,7 @@ var exposeCmd = &cobra.Command{
 			log.Fatalf("Error creating API Client\n")
 		}
 
+		//check if digi exists
 		currAuri, err := api.Resolve(name)
 
 		if err == nil && currAuri != nil {
@@ -605,6 +613,7 @@ var exposeCmd = &cobra.Command{
 			log.Fatalf(err.Error())
 		}
 
+		//wait for digi's pod to be ready
 		wait.Poll(time.Second, 15*time.Second, func() (bool, error) {
 			podsInNS := k8sClientset.Clientset.CoreV1().Pods(namespace)
 			selectedPods, err := podsInNS.List(context.TODO(), metav1.ListOptions{LabelSelector: fmt.Sprintf("name=%s", name)})
@@ -621,19 +630,31 @@ var exposeCmd = &cobra.Command{
 			return false, nil
 		})
 
+		//get the services in this namespace -- this will be used to create a NodePort later on
 		servicesInNs := k8sClientset.Clientset.CoreV1().Services(namespace)
-		currService, err := servicesInNs.Get(context.TODO(), name, metav1.GetOptions{})
 
-		if err != nil {
-			log.Fatalf(err.Error())
+		//use the port and targetPort of the digi's service if not specified
+		if portFlag < 0 || targetPortFlag < 0 {
+			currService, err := servicesInNs.Get(context.TODO(), name, metav1.GetOptions{})
+
+			if err != nil {
+				log.Fatalf(err.Error())
+			}
+
+			if portFlag < 0 {
+				port = int(currService.Spec.Ports[0].Port)
+			}
+
+			if targetPortFlag < 0 {
+				targetPort = currService.Spec.Ports[0].TargetPort
+			}
 		}
 
-		port := currService.Spec.Ports[0].Port
-		targetPort := currService.Spec.Ports[0].TargetPort
-
-		k8sNodeportInt, err := strconv.Atoi(k8sNodeport)
-		if err != nil {
-			log.Fatalf(err.Error())
+		//create a NodePort. If the --nodeport flag is not specified, setting the value we pass
+		//to k8s to 0 will cause it to pick a port on its own
+		passedNodePort := nodePortFlag
+		if passedNodePort < 0 {
+			passedNodePort = 0
 		}
 
 		nodeportService := &v1.Service{
@@ -648,9 +669,9 @@ var exposeCmd = &cobra.Command{
 				Ports: []v1.ServicePort{
 					{
 						Name:       fmt.Sprintf("%s-nodeport-ports", name),
-						Port:       port,
+						Port:       int32(port),
 						TargetPort: targetPort,
-						NodePort:   int32(k8sNodeportInt),
+						NodePort:   int32(passedNodePort),
 					},
 				},
 			},
