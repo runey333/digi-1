@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -20,9 +21,6 @@ import (
 	"digi.dev/digi/cmd/digi/helper"
 	"digi.dev/digi/pkg/core"
 
-	"time"
-
-	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -622,7 +620,7 @@ var exposeCmd = &cobra.Command{
 			}
 
 			for _, pod := range selectedPods.Items {
-				if pod.Status.Phase == corev1.PodRunning {
+				if pod.Status.Phase == v1.PodRunning {
 					return true, nil
 				}
 			}
@@ -634,18 +632,18 @@ var exposeCmd = &cobra.Command{
 		servicesInNs := k8sClientset.Clientset.CoreV1().Services(namespace)
 
 		//use the port and targetPort of the digi's service if not specified
-		if portFlag < 0 || targetPortFlag < 0 {
+		if portFlag <= 0 || targetPortFlag <= 0 {
 			currService, err := servicesInNs.Get(context.TODO(), name, metav1.GetOptions{})
 
 			if err != nil {
 				log.Fatalf(err.Error())
 			}
 
-			if portFlag < 0 {
+			if portFlag <= 0 {
 				port = int(currService.Spec.Ports[0].Port)
 			}
 
-			if targetPortFlag < 0 {
+			if targetPortFlag <= 0 {
 				targetPort = currService.Spec.Ports[0].TargetPort
 			}
 		}
@@ -653,9 +651,6 @@ var exposeCmd = &cobra.Command{
 		//create a NodePort. If the --nodeport flag is not specified, setting the value we pass
 		//to k8s to 0 will cause it to pick a port on its own
 		passedNodePort := nodePortFlag
-		if passedNodePort < 0 {
-			passedNodePort = 0
-		}
 
 		nodeportService := &v1.Service{
 			ObjectMeta: metav1.ObjectMeta{
