@@ -1,10 +1,11 @@
-# EMQX
-FROM emqx/emqx:5.0.18 as emqx
+# Headscale
+FROM headscale/headscale:0.20.0 as headscale
 
 # Digi
 FROM python:3.8
 
-COPY --from=emqx /usr/local/bin/emqx /bin/emqx
+COPY --from=headscale /bin/headscale /bin/headscale
+COPY deploy/image/config.yaml /etc/headscale/
 
 WORKDIR /src/
 
@@ -16,6 +17,8 @@ RUN pip install -e ./driver
 
 COPY *.txt .
 RUN pip install -r thirdparty.txt > /dev/null 2>&1 || true
+
+RUN mkdir -p /var/lib/headscale/
 
 COPY *.py .
 CMD python3 handler.py

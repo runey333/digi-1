@@ -33,28 +33,6 @@ func KubeConfigFile() string {
 	return kubeConfigFile
 }
 
-func ClusterIDs(kc *KubeConfig) []string {
-	ids := make([]string, len(kc.Clusters))
-
-	for k := range kc.Clusters {
-		ids = append(ids, k)
-	}
-
-	return ids
-}
-
-func CurrentContext(kc *KubeConfig) string {
-	return kc.CurrentContext
-}
-
-func ClusterToContextMap(kc *KubeConfig) map[string]string {
-	cm := make(map[string]string)
-	for n, c := range kc.Contexts {
-		cm[n] = c.Cluster
-	}
-	return cm
-}
-
 func LoadKubeConfig(src ...string) (*KubeConfig, error) {
 	var file string
 
@@ -77,6 +55,48 @@ func LoadKubeConfig(src ...string) (*KubeConfig, error) {
 	return config, nil
 }
 
+func Clusters(kc *KubeConfig) []string {
+	ids := make([]string, len(kc.Clusters)-1)
+
+	for k := range kc.Clusters {
+		ids = append(ids, k)
+	}
+
+	return ids
+}
+
+func Users(kc *KubeConfig) []string {
+	ids := make([]string, len(kc.AuthInfos)-1)
+
+	for k := range kc.AuthInfos {
+		ids = append(ids, k)
+	}
+
+	return ids
+}
+
+func Contexts(kc *KubeConfig) []string {
+	ids := make([]string, len(kc.Contexts)-1)
+
+	for k := range kc.Contexts {
+		ids = append(ids, k)
+	}
+
+	return ids
+}
+
+func CurrentContext(kc *KubeConfig) string {
+	return kc.CurrentContext
+}
+
+func ClusterToContextMap(kc *KubeConfig) map[string]string {
+	cm := make(map[string]string)
+	for n, c := range kc.Contexts {
+		cm[n] = c.Cluster
+	}
+	return cm
+}
+
 func ClusterExistsLocal(id string) (bool, error) {
 	localConfig, err := LoadKubeConfig(kubeConfigFile)
 	return clusterExists(id, localConfig), err
@@ -85,6 +105,14 @@ func ClusterExistsLocal(id string) (bool, error) {
 func clusterExists(id string, config *KubeConfig) bool {
 	_, ok := config.Clusters[id]
 	return ok
+}
+
+func DeleteKubeConfig(kc *KubeConfig, id string) error {
+	delete(kc.Clusters, id)
+	delete(kc.AuthInfos, id)
+	delete(kc.Contexts, id)
+
+	return nil
 }
 
 // MergeKubeConfigs merges a given set of kubeconfigs, assuming they are all valid, returns the merged kubeconfig
@@ -127,7 +155,7 @@ func WriteKubeConfig(c *KubeConfig, dest ...string) error {
 	return clientcmd.WriteToFile(*c, file)
 }
 
-func FixMasterKubeConfig(file, clusterID, clusterAddr string, modifiers []string) error {
+func FixKubeConfig(file, clusterID, clusterAddr string, modifiers []string) error {
 	config, err := clientcmd.LoadFromFile(file)
 
 	if err != nil {

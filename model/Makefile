@@ -205,9 +205,11 @@ watch:
 ifndef SHELL_BIN
 override SHELL_BIN = sh
 endif
-.PHONY: connect
-connect:
+.PHONY: attach connect
+attach:
 	kubectl exec -it `kubectl get pod --field-selector status.phase=Running -l name=$(NAME) -oname` -- /bin/$(SHELL_BIN)
+connect:
+	kubectl port-forward service/$(NAME) $(LOCAL):$(REMOTE)
 
 # lake
 ifndef LAKENAME
@@ -255,6 +257,13 @@ start-emqx:
 	WORKDIR=$(DIGIHOME) digi run message/emqx emqx
 stop-emqx:
 	digi stop emqx
+
+# net/headscale
+.PHONY: start-net stop-net
+start-net:
+	WORKDIR=$(DIGIHOME) digi run net/headscale net
+stop-net:
+	digi stop net
 
 .PHONY: start-space stop-space
 start-space: | start-lake # ...
