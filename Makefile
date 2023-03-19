@@ -34,9 +34,10 @@ ctx:
 install: | digi neat ctx
 	@mkdir $(HOMEDIR) >/dev/null 2>&1 || true
 	@mkdir $(HOMEDIR)/headscale >/dev/null 2>&1 || true
-	@rm $(HOMEDIR)/lake $(HOMEDIR)/space $(HOMEDIR)/message $(HOMEDIR)/net $(HOMEDIR)/sidecar >/dev/null 2>&1 || true
+	@rm $(HOMEDIR)/lake $(HOMEDIR)/sourcer $(HOMEDIR)/space $(HOMEDIR)/message $(HOMEDIR)/net $(HOMEDIR)/sidecar >/dev/null 2>&1 || true
 	@touch $(HOMEDIR)/config $(HOMEDIR)/alias
 	@ln -s $(SOURCE)/lake/ $(HOMEDIR)/lake
+	@ln -s $(SOURCE)/sourcer/ $(HOMEDIR)/sourcer
 	@ln -s $(SOURCE)/space/ $(HOMEDIR)/space
 	@ln -s $(SOURCE)/message/ $(HOMEDIR)/message
 	@ln -s $(SOURCE)/sidecar/ $(HOMEDIR)/sidecar

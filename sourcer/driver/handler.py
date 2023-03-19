@@ -2,9 +2,24 @@ import digi
 from flask import Flask, request
 import os
 import logging
+import json
 
 app = Flask(__name__)
 app.logger.setLevel(logging.INFO)
+
+"""
+registry_location = os.getenv("REGISTRY", "")
+if not registry_location:
+    registry = {}
+else:
+    try:
+        registry = json.load(registry_location)
+    except:
+        registry = {}
+app.logger.info(registry_location)
+app.logger.info(registry)
+app.logger.info(os.getcwd())
+"""
 
 registry = {
     "arun" : {

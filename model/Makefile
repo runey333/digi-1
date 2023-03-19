@@ -205,11 +205,9 @@ watch:
 ifndef SHELL_BIN
 override SHELL_BIN = sh
 endif
-.PHONY: attach connect
-attach:
-	kubectl exec -it `kubectl get pod --field-selector status.phase=Running -l name=$(NAME) -oname` -- /bin/$(SHELL_BIN)
+.PHONY: connect
 connect:
-	kubectl port-forward service/$(NAME) $(LOCAL):$(REMOTE)
+	kubectl exec -it `kubectl get pod --field-selector status.phase=Running -l name=$(NAME) -oname` -- /bin/$(SHELL_BIN)
 
 # lake
 ifndef LAKENAME
@@ -228,8 +226,10 @@ conn-lake-stop:
 	kill $$(lsof -t -i:9867) >/dev/null 2>&1 || true && wait $$(lsof -t -i:9867) >/dev/null 2>&1
 start-lake:
 	WORKDIR=$(DIGIHOME) digi run lake lake --no-pool
+	WORKDIR=$(DIGIHOME) digi run sourcer sourcer --no-pool
 stop-lake:
 	digi stop lake
+	digi stop sourcer
 load:
 	cd $(WORKDIR) && zed load -use $(NAME) $(FILE)
 delete-pool:
@@ -257,13 +257,6 @@ start-emqx:
 	WORKDIR=$(DIGIHOME) digi run message/emqx emqx
 stop-emqx:
 	digi stop emqx
-
-# net/headscale
-.PHONY: start-net stop-net
-start-net:
-	WORKDIR=$(DIGIHOME) digi run net/headscale net
-stop-net:
-	digi stop net
 
 .PHONY: start-space stop-space
 start-space: | start-lake # ...

@@ -130,6 +130,12 @@ type: object
 
 _ingress = """
 ingress:
+  sourcer:
+    properties:
+      use_sourcer:
+        type: boolean
+    type: object
+  type: object
   properties:
   type: object
 """
@@ -299,8 +305,9 @@ def make_attr(_name, _attr_tpl, _main_tpl, src_attrs, use_intent_status=False):
                         t = t.replace('array', '')[1:-1]
                     else:
                         _attr_tpl = _attr
-            attrs[_n] = yaml.load(_attr_tpl.format(name=_n, datatype=t),
-                                  Loader=yaml.FullLoader)
+            if _n != "sourcer":
+              attrs[_n] = yaml.load(_attr_tpl.format(name=_n, datatype=t),
+                                    Loader=yaml.FullLoader)
     if len(attrs) > 0:
         if _main_tpl:
             result = yaml.load(_main_tpl, Loader=yaml.FullLoader)

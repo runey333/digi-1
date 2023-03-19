@@ -3,6 +3,8 @@ import digi.data.sync as sync
 import digi.data.util as util
 from digi.data import logger, zed
 from digi.data import flow as flow_lib
+import requests
+import os
 
 """
 A router contains a collection of pipelets organized as ingresses and egresses.
@@ -25,21 +27,47 @@ class Ingress:
             _sync.start()
             logger.info(f"started ingress sync {name} "
                         f"with query: {_sync.query_str}")
+            
+    #TODO:
+    #Router: move registry to a config file with an env var for its location
+    
+    def source_helper(self, source_quantifier):
+        try:
+            #sourcer_port = os.getenv("SOURCER_PORT", 5000)
+            sourcer_response = requests.get(f'http://sourcer:7534', data={'source_quantifier' : source_quantifier}) #TODO: try http://sourcer
+            
+            digi.logger.info(sourcer_response.json())
+            if sourcer_response.ok:
+                digi.logger.info(f"Used sourcer for source {source_quantifier}")
+                return []
+        except:
+            pass
+        
+        digi.logger.info(f"Used parse_source for source {source_quantifier}")
+        return util.parse_source(source_quantifier)
 
     def update(self, config: dict):
         self._syncs = dict()
-
+        
+        use_sourcer = ("sourcer" in config) and ("use_sourcer" in config["sourcer"]) and config["sourcer"]["use_sourcer"]
+        
         for name, ig in config.items():
-            if ig.get("pause", False):
+            if ig.get("pause", False) or name == "sourcer":
                 continue
 
             sources = list()
             flow, flow_agg = ig.get("flow", ""), \
                              ig.get("flow_agg", "")
             for s in ig.get("source", []):
-                sources += util.parse_source(s)
+                if use_sourcer:
+                    sources += self.source_helper(s)
+                else:
+                    sources += util.parse_source(s)
             for s in ig.get("sources", []):
-                sources += util.parse_source(s)
+                if use_sourcer:
+                    sources += self.source_helper(s)
+                else:
+                    sources += util.parse_source(s)
 
             # TBD deduplicate sources
             if len(sources) == 0:
