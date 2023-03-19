@@ -1,50 +1,12 @@
 import digi
 from flask import Flask, request
-import os
 import logging
-import json
+import yaml
 
 app = Flask(__name__)
 app.logger.setLevel(logging.INFO)
 
-"""
-registry_location = os.getenv("REGISTRY", "")
-if not registry_location:
-    registry = {}
-else:
-    try:
-        registry = json.load(registry_location)
-    except:
-        registry = {}
-app.logger.info(registry_location)
-app.logger.info(registry)
-app.logger.info(os.getcwd())
-"""
-
-registry = {
-    "arun" : {
-        "local1" : {
-            "url" : "http://host.docker.internal:8001",
-            "digis" : {
-                "l1" : {
-                    "kind" : "lamp",
-                    "egress" : ["energy"],
-                    "ingress" : []
-                }
-            }
-        },
-        "local2" : {
-            "url" : "http://host.docker.internal:8002",
-            "digis" : {
-                "p1" : {
-                    "kind" : "phone",
-                    "egress" : ["footprint", "spl"],
-                    "ingress" : ["footprint"]
-                }     
-            }
-        }
-    }
-}
+registry = {}
 
 def find_url(user, dspace):
     if user not in registry:
@@ -127,6 +89,10 @@ def h(model):
     app.logger.info(model)
 
 if __name__ == '__main__':
+    curr_spec, _, _ = digi.util.get_spec(digi.g, digi.v, digi.r, digi.n, digi.ns)
+    if "meta" in curr_spec and "registry" in curr_spec["meta"]:
+        registry = yaml.safe_load(curr_spec["meta"]["registry"])
+    app.logger.info(registry)
     app.run(host="0.0.0.0", port=7534)
     digi.run()
 
