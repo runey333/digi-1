@@ -33,13 +33,12 @@ class Ingress:
     
     def source_helper(self, source_quantifier):
         try:
-            #sourcer_port = os.getenv("SOURCER_PORT", 5000)
-            sourcer_response = requests.get(f'http://sourcer:7534', data={'source_quantifier' : source_quantifier}) #TODO: try http://sourcer
+            sourcer_response = requests.get(f'http://sourcer:7534/resolve', json={'source_quantifier' : source_quantifier}, headers={"Content-Type": "application/json"})
+            sourcer_response_json = sourcer_response.json() #list of the form [lake url, sources, success]
             
-            digi.logger.info(sourcer_response.json())
-            if sourcer_response.ok:
+            if sourcer_response_json[-1]:
                 digi.logger.info(f"Used sourcer for source {source_quantifier}")
-                return []
+                return sourcer_response_json[1]
         except:
             pass
         

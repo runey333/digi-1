@@ -110,17 +110,17 @@ def resolve_source(source_quantifier):
 @app.route("/resolve", methods=["GET", "POST"])
 def resolve():
     request_json = request.get_json(silent=True)
+
     if not request_json:
-        return [None, [], 400]
-    app.logger.info(request_json)
+        return [None, [], False]
     
     source_quantifier = request_json["source_quantifier"]
     source_lake_url, sources, resolve_err = resolve_source(source_quantifier) 
     if resolve_err:
         app.logger.info(f"Encountered resolution error {resolve_err} for source quantifier {source_quantifier}")
-        return [source_lake_url, sources, 400]
+        return [source_lake_url, sources, False]
     
-    return [source_lake_url, sources, 200]
+    return [source_lake_url, sources, True]
 
 @digi.on.model
 def h(model):
