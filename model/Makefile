@@ -229,7 +229,7 @@ conn-lake-stop:
 start-lake:
 	WORKDIR=$(DIGIHOME) digi run lake lake --no-pool
 start-sourcer:
-	WORKDIR=$(DIGIHOME) digi run space/sourcer sourcer --no-pool
+	WORKDIR=$(DIGIHOME) digi run space/sourcer sourcer -d $(CR) --no-pool
 stop-lake:
 	digi stop lake
 stop-sourcer:

@@ -4,23 +4,4 @@ metadata:
   name: {{ .Values.name }}
 spec:
   meta:
-    registry: |
-      arun:
-        local1:
-          url: http://host.docker.internal:8001
-          digis:
-            l1:
-              kind: lamp
-              egress:
-              - energy
-              ingress: []
-        local2:
-          url: http://host.docker.internal:8002
-          digis:
-            p1:
-              kind: phone
-              egress:
-              - footprint
-              - spl
-              ingress:
-              - footprint
+    registry:
