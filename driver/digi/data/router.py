@@ -3,8 +3,8 @@ import digi.data.sync as sync
 import digi.data.util as util
 from digi.data import logger, zed
 from digi.data import flow as flow_lib
+
 import requests
-import os
 
 """
 A router contains a collection of pipelets organized as ingresses and egresses.
@@ -31,14 +31,16 @@ class Ingress:
     #TODO:
     #Router: move registry to a config file with an env var for its location
     
-    def source_helper(self, source_quantifier):
+    def resolve_source(self, source_quantifier):
         try:
-            sourcer_response = requests.get(f'http://sourcer:7534/resolve', json={'source_quantifier' : source_quantifier}, headers={"Content-Type": "application/json"})
-            sourcer_response_json = sourcer_response.json() #list of the form [lake url, sources, success]
+            sourcer_response = requests.get("http://sourcer:7534/resolve", 
+                                            json={"source_quantifier" : source_quantifier}, 
+                                            headers={"Content-Type": "application/json"})
+            sourcer_response_json = sourcer_response.json() #dict containing {source_lake_url, sources, success}
             
-            if sourcer_response_json[-1]:
+            if sourcer_response_json["success"]:
                 digi.logger.info(f"Used sourcer for source {source_quantifier}")
-                return sourcer_response_json[1]
+                return sourcer_response_json["sources"]
         except:
             pass
         
@@ -48,23 +50,23 @@ class Ingress:
     def update(self, config: dict):
         self._syncs = dict()
         
-        use_sourcer = ("sourcer" in config) and ("use_sourcer" in config["sourcer"]) and config["sourcer"]["use_sourcer"]
-        
         for name, ig in config.items():
-            if ig.get("pause", False) or name == "sourcer":
+            if ig.get("pause", False):
                 continue
 
             sources = list()
             flow, flow_agg = ig.get("flow", ""), \
                              ig.get("flow_agg", "")
+            use_sourcer = ig.get("use_sourcer", False)
+            
             for s in ig.get("source", []):
                 if use_sourcer:
-                    sources += self.source_helper(s)
+                    sources += self.resolve_source(s)
                 else:
                     sources += util.parse_source(s)
             for s in ig.get("sources", []):
                 if use_sourcer:
-                    sources += self.source_helper(s)
+                    sources += self.resolve_source(s)
                 else:
                     sources += util.parse_source(s)
 

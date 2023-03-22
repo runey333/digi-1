@@ -205,15 +205,17 @@ watch:
 ifndef SHELL_BIN
 override SHELL_BIN = sh
 endif
-.PHONY: connect
-connect:
+.PHONY: attach connect
+attach:
 	kubectl exec -it `kubectl get pod --field-selector status.phase=Running -l name=$(NAME) -oname` -- /bin/$(SHELL_BIN)
+connect:
+	kubectl port-forward service/$(NAME) $(LOCAL):$(REMOTE)
 
 # lake
 ifndef LAKENAME
 override LAKENAME = lake
 endif
-.PHONY: query conn-lake conn-lake-bg conn-lake-stop start-lake stop-lake load
+.PHONY: query conn-lake conn-lake-bg conn-lake-stop start-lake start-sourcer stop-lake stop-sourcer load
 # TBD enforce single lake or use service to identify lake
 query:
 	kubectl exec -it `kubectl get pod --field-selector status.phase=Running -l app=lake -oname` \
@@ -226,9 +228,11 @@ conn-lake-stop:
 	kill $$(lsof -t -i:9867) >/dev/null 2>&1 || true && wait $$(lsof -t -i:9867) >/dev/null 2>&1
 start-lake:
 	WORKDIR=$(DIGIHOME) digi run lake lake --no-pool
-	WORKDIR=$(DIGIHOME) digi run sourcer sourcer --no-pool
+start-sourcer:
+	WORKDIR=$(DIGIHOME) digi run space/sourcer sourcer --no-pool
 stop-lake:
 	digi stop lake
+stop-sourcer:
 	digi stop sourcer
 load:
 	cd $(WORKDIR) && zed load -use $(NAME) $(FILE)
@@ -258,9 +262,16 @@ start-emqx:
 stop-emqx:
 	digi stop emqx
 
+# net/headscale
+.PHONY: start-net stop-net
+start-net:
+	WORKDIR=$(DIGIHOME) digi run net/headscale net
+stop-net:
+	digi stop net
+
 .PHONY: start-space stop-space
-start-space: | start-lake # ...
-stop-space: | stop-lake
+start-space: | start-lake start-sourcer # ...
+stop-space: | stop-lake stop-sourcer
 .PHONY: register-space list-space switch-space rename-space show-space
 register-space:
 	./register-space.sh $(ADDR) $(USER) $(APISERVER) $(CONTEXT) $(CA.CRT) $(CLIENT.CRT) $(CLIENT.KEY)

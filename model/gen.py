@@ -130,12 +130,6 @@ type: object
 
 _ingress = """
 ingress:
-  sourcer:
-    properties:
-      use_sourcer:
-        type: boolean
-    type: object
-  type: object
   properties:
   type: object
 """
@@ -171,6 +165,8 @@ properties:
   patch_source:
     type: boolean
   pause:
+    type: boolean
+  use_sourcer:
     type: boolean
 type: object
 """
