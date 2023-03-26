@@ -64,6 +64,11 @@ class Ingress:
                     sources += self.resolve_source(s)
                 else:
                     sources += util.parse_source(s)
+            for s in ig.get("sources", []):
+                if use_sourcer:
+                    sources += self.resolve_source(s)
+                else:
+                    sources += util.parse_source(s)
 
             # TBD deduplicate sources
             if len(sources) == 0:
