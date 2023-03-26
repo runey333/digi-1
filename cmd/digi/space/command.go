@@ -21,6 +21,7 @@ var (
 		"mounter": true,
 		"emqx":    true,
 		"net":     true,
+		"sourcer": true,
 		// ...
 	}
 )
