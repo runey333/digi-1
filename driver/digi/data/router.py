@@ -59,15 +59,14 @@ class Ingress:
                              ig.get("flow_agg", "")
             use_sourcer = ig.get("use_sourcer", False)
             
-            for s in ig.get("source", []):
-                if use_sourcer:
+            source_list = []
+            source_list.extend(ig.get("source", []))
+            source_list.extend(ig.get("sources", []))
+            if use_sourcer:
+                for s in source_list:
                     sources += self.resolve_source(s)
-                else:
-                    sources += util.parse_source(s)
-            for s in ig.get("sources", []):
-                if use_sourcer:
-                    sources += self.resolve_source(s)
-                else:
+            else:
+                for s in source_list:
                     sources += util.parse_source(s)
 
             # TBD deduplicate sources

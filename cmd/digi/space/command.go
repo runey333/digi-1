@@ -99,18 +99,18 @@ var startCmd = &cobra.Command{
 	Aliases: []string{"init"},
 	Run: func(cmd *cobra.Command, args []string) {
 		registry_file, _ := cmd.Flags().GetString("registry-file")
+		params := map[string]string{
+			"CR": registry_file,
+		}
 
 		if len(args) == 0 {
-			params := map[string]string{
-				"CR": registry_file,
-			}
 			_ = helper.RunMake(params, "start-space", true, false)
 		} else {
 			for _, name := range args {
 				if ok, _ := controllers[name]; !ok {
 					log.Fatalf("unknown controller: %s\n", name)
 				}
-				_ = StartController(name)
+				_ = StartControllerWithParams(params, name)
 			}
 		}
 	},
@@ -135,6 +135,10 @@ var stopCmd = &cobra.Command{
 
 func StartController(name string) error {
 	return helper.RunMake(nil, "start-"+name, true, false)
+}
+
+func StartControllerWithParams(params map[string]string, name string) error {
+	return helper.RunMake(params, "start-"+name, true, false)
 }
 
 func StopController(name string) error {

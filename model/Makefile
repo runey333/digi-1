@@ -229,7 +229,7 @@ conn-lake-stop:
 start-lake:
 	WORKDIR=$(DIGIHOME) digi run lake lake --no-pool
 start-sourcer:
-	WORKDIR=$(DIGIHOME) digi run space/sourcer sourcer -d $(CR) --no-pool
+	WORKDIR=$(DIGIHOME) digi run space/sourcer sourcer -d $(CR)
 stop-lake:
 	digi stop lake
 stop-sourcer:
@@ -270,8 +270,8 @@ stop-net:
 	digi stop net
 
 .PHONY: start-space stop-space
-start-space: | start-lake start-sourcer # ...
-stop-space: | stop-lake stop-sourcer
+start-space: | start-lake # ...
+stop-space: | stop-lake
 .PHONY: register-space list-space switch-space rename-space show-space
 register-space:
 	./register-space.sh $(ADDR) $(USER) $(APISERVER) $(CONTEXT) $(CA.CRT) $(CLIENT.CRT) $(CLIENT.KEY)
