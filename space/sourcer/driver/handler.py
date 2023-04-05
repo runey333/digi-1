@@ -40,7 +40,6 @@ def find_digi_source(user, dspace, digi_name, branch):
     else:
         return []
         
-
 def resolve_source(source_quantifier):
     valid_quantifier = True
     try:

@@ -215,7 +215,8 @@ connect:
 ifndef LAKENAME
 override LAKENAME = lake
 endif
-.PHONY: query conn-lake conn-lake-bg conn-lake-stop start-lake start-sourcer stop-lake stop-sourcer load
+.PHONY: query conn-lake conn-lake-bg conn-lake-stop start-lake stop-lake load
+.PHONY: start-sourcer stop-sourcer
 # TBD enforce single lake or use service to identify lake
 query:
 	kubectl exec -it `kubectl get pod --field-selector status.phase=Running -l app=lake -oname` \
