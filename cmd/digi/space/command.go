@@ -98,9 +98,9 @@ var startCmd = &cobra.Command{
 	Short:   "Start space controllers",
 	Aliases: []string{"init"},
 	Run: func(cmd *cobra.Command, args []string) {
-		registry_file, _ := cmd.Flags().GetString("registry-file")
+		registryFile, _ := cmd.Flags().GetString("registry-file")
 		params := map[string]string{
-			"CR": registry_file,
+			"CR": registryFile,
 		}
 
 		if len(args) == 0 {
@@ -353,7 +353,7 @@ func init() {
 	log.SetFlags(0)
 	// TBD delete digi space removes all running digis and controllers
 	RootCmd.AddCommand(startCmd)
-	startCmd.Flags().StringP("registry-file", "f", "cr.yaml", "Specify a file with registry data")
+	startCmd.Flags().StringP("registry-file", "f", "cr.yaml", "Specify a file containing registry data")
 	RootCmd.AddCommand(stopCmd)
 
 	RootCmd.AddCommand(MountCmd)
