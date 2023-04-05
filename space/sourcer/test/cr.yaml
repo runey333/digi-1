@@ -1,4 +1,4 @@
-apiVersion: example.digi.dev/v1
+apiVersion: digi.dev/v1
 kind: Sourcer
 metadata:
   name: sourcer

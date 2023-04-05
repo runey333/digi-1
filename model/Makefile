@@ -216,7 +216,6 @@ ifndef LAKENAME
 override LAKENAME = lake
 endif
 .PHONY: query conn-lake conn-lake-bg conn-lake-stop start-lake stop-lake load
-.PHONY: start-sourcer stop-sourcer
 # TBD enforce single lake or use service to identify lake
 query:
 	kubectl exec -it `kubectl get pod --field-selector status.phase=Running -l app=lake -oname` \
@@ -229,17 +228,19 @@ conn-lake-stop:
 	kill $$(lsof -t -i:9867) >/dev/null 2>&1 || true && wait $$(lsof -t -i:9867) >/dev/null 2>&1
 start-lake:
 	WORKDIR=$(DIGIHOME) digi run lake lake --no-pool
-start-sourcer:
-	WORKDIR=$(DIGIHOME) digi run space/sourcer sourcer -d $(CR)
 stop-lake:
 	digi stop lake
-stop-sourcer:
-	digi stop sourcer
 load:
 	cd $(WORKDIR) && zed load -use $(NAME) $(FILE)
 delete-pool:
 	kubectl exec `kubectl get pod --field-selector status.phase=Running -l app=lake -oname` \
     -- bash -c "zed drop -f $(NAME) >/dev/null 2>&1" || true
+
+.PHONY: start-sourcer stop-sourcer
+start-sourcer:
+	WORKDIR=$(DIGIHOME) digi run space/sourcer sourcer -d $(CR)
+stop-sourcer:
+	digi stop sourcer
 
 # syncer
 .PHONY: start-syncer stop-syncer
